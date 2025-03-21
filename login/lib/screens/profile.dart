@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../db/db.dart';
+import './edit_profile.dart';
 
 class ProfileScreen extends StatefulWidget {
   final int userId;
@@ -75,8 +76,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoRow("Level", user!['level']),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _pickImage,
-              child: const Text("Edit Image"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditProfileScreen(user: user!),
+                  ),
+                ).then((_) {
+                  _loadUser(); // Reload user info after editing
+                });
+              },
+              child: const Text("Edit Profile"),
             ),
           ],
         ),
