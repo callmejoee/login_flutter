@@ -1,77 +1,95 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../db/db.dart';
 
 class ProfileScreen extends StatefulWidget {
+  final int userId;
+
+  const ProfileScreen({required this.userId});
+
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  File? _selectedImage;
+  Map<String, dynamic>? user;
+  final ImagePicker _picker = ImagePicker();
 
-  Future _pickImageFromGallery() async {
-    final returnedImage = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
 
-    if (returnedImage == null) return;
+  Future<void> _loadUser() async {
+    final data = await DatabaseHelper.instance.getUserById(widget.userId);
     setState(() {
-      _selectedImage = File(returnedImage.path);
+      user = data;
     });
   }
 
-  Future _pickImageFromCamera() async {
-    final returnedImage = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-    );
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
-    if (returnedImage == null) return;
-    setState(() {
-      _selectedImage = File(returnedImage.path);
-    });
+    if (pickedFile != null && user != null) {
+      final updatedUser = Map<String, dynamic>.from(user!);
+      updatedUser['imagePath'] = pickedFile.path;
+
+      await DatabaseHelper.instance.updateUser(user!['id'], updatedUser);
+
+      setState(() {
+        user = updatedUser;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
-      appBar: AppBar(title: Text("Edit Profile")),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _selectedImage != null
-              ? CircleAvatar(
-                radius: 80,
-                backgroundImage: FileImage(_selectedImage!),
-              )
-              : CircleAvatar(radius: 80, child: Icon(Icons.person, size: 80)),
-
-          SizedBox(height: 20),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  _pickImageFromCamera();
-                },
-                icon: Icon(Icons.camera),
-                label: Text("Camera"),
+      appBar: AppBar(title: const Text("My Profile")),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                radius: 60,
+                backgroundImage:
+                    user!['imagePath'] != null && user!['imagePath'].isNotEmpty
+                        ? FileImage(File(user!['imagePath']))
+                        : const AssetImage('assets/placeholder.png')
+                            as ImageProvider,
               ),
-              SizedBox(width: 10),
-              ElevatedButton.icon(
-                onPressed: () {
-                  _pickImageFromGallery();
-                },
-                icon: Icon(Icons.image),
-                label: Text("Gallery"),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 20),
-        ],
+            ),
+            const SizedBox(height: 20),
+            _buildInfoRow("Name", user!['name']),
+            _buildInfoRow("Email", user!['email']),
+            _buildInfoRow("Student ID", user!['studentID']),
+            _buildInfoRow("Gender", user!['gender']),
+            _buildInfoRow("Level", user!['level']),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _pickImage,
+              child: const Text("Edit Image"),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String? value) {
+    return Row(
+      children: [
+        Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(value ?? '-'),
+      ],
     );
   }
 }

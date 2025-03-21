@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../db/db.dart';
 import './profile.dart';
 import './signup.dart';
+import './image_picker.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -26,15 +27,21 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text("Login Successful!")));
 
-        // Navigate to Profile Page after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProfileScreen()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid Email or Password")),
-        );
+        if (user['imagePath'] == null || user['imagePath'].isEmpty) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ImagePickerScreen(userId: user['id']),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfileScreen(userId: user['id']),
+            ),
+          );
+        }
       }
     }
   }

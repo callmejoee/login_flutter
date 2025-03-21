@@ -34,6 +34,7 @@ class _SignUpState extends State<SignUp> {
         'password': txtPass.text,
         'gender': _gender ?? '',
         'level': _selectedLevel ?? '',
+        'imagePath': '',
       };
 
       await DatabaseHelper.instance.insertUser(user);

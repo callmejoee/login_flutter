@@ -29,7 +29,8 @@ class DatabaseHelper {
         studentID TEXT NOT NULL,
         password TEXT NOT NULL,
         gender TEXT,
-        level TEXT
+        level TEXT,
+        imagePath TEXT
       )
     ''');
   }
@@ -52,5 +53,30 @@ class DatabaseHelper {
     } else {
       return null;
     }
+  }
+
+  Future<Map<String, dynamic>?> getUserById(int id) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> users = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (users.isNotEmpty) {
+      return users.first;
+    } else {
+      return null;
+    }
+  }
+
+  Future<int> updateUser(int id, Map<String, dynamic> updatedUser) async {
+    final db = await instance.database;
+    return await db.update(
+      'users',
+      updatedUser,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
